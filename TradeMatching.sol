@@ -43,7 +43,7 @@ contract TradeMatching{
             i = tradesByDate[tradedate][count];
             t = trademap[i];
             count--;
-            if(t.sender == msg.sender) continue;
+            if(t.sender == msg.sender || t.matchedtrade != 0) continue;
             if(t.seller == seller && t.buyer == buyer && t.seccode == seccode && t.tradedate == tradedate && t.deliverydate == deliverydate && t.quantity == quantity && t.price == price && t.deliveryamount == deliveryamount){
                 t.matchedtrade = tradeID;
                 trademap[tradeID].matchedtrade = i;
