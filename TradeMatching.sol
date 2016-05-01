@@ -1,6 +1,5 @@
 contract TradeMatching{
     
-        Trade t;
 
     // Trades to be matched
     struct Trade{
@@ -37,23 +36,24 @@ contract TradeMatching{
         /* here starts "matching" part! */
         
         // for the rest of the trade date's trades,
-        uint i;
+        uint matchingTradeID;
+        
         while(count > 0){
-            i = tradesByDate[tradedate][count];
-            t = trademap[i];
             count--;
+            matchingTradeID = tradesByDate[tradedate][count];
+            Trade t = trademap[matchingTradeID];
             if(t.sender == msg.sender || t.matchedtrade != 0) continue;
             if(t.seller == seller && t.buyer == buyer && t.seccode == seccode && t.tradedate == tradedate && t.deliverydate == deliverydate && t.quantity == quantity && t.price == price && t.deliveryamount == deliveryamount){
-                t.matchedtrade = tradeID;
-                trademap[tradeID].matchedtrade = i;
+                trademap[matchingTradeID].matchedtrade = tradeID;
+                trademap[tradeID].matchedtrade = matchingTradeID;
                 break;
             }
         }
     }
     
     // getter
-    function getTrade(uint id) constant returns (address sender, address seller, address buyer,  bytes12 seccode, uint32 tradedate, uint32 deliverydate, uint quantity, uint32 price, int deliveryamount, uint matchedtrade){
-        t=trademap[id];
+    function getTrade(uint tradeID) constant returns (address sender, address seller, address buyer,  bytes12 seccode, uint32 tradedate, uint32 deliverydate, uint quantity, uint32 price, int deliveryamount, uint matchedtrade){
+        Trade t = trademap[tradeID];
         sender = t.sender;
         seller = t.seller;
         buyer = t.buyer;
