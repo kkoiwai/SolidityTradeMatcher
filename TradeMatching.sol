@@ -17,7 +17,7 @@ contract TradeMatching{
     }
     
     // The storage to save all trades
-    uint numTrades;
+    uint numTrades = 1; //start with 1 to make clear 0=null
     mapping(uint => Trade) trademap;
     
     // data structure to link trades by Date
@@ -31,14 +31,13 @@ contract TradeMatching{
         
         // store tradeID to tradesByDate
         uint count = tradesByDateCounter[tradedate];
-        count++;
         tradesByDate[tradedate][count] = tradeID;
+        tradesByDateCounter[tradedate] = count + 1;
         
         /* here starts "matching" part! */
         
         // for the rest of the trade date's trades,
         uint i;
-        count--;
         while(count > 0){
             i = tradesByDate[tradedate][count];
             t = trademap[i];
@@ -53,20 +52,22 @@ contract TradeMatching{
     }
     
     // getter
-    function getTrade(uint id) returns (address seller, address buyer,  bytes12 seccode, uint32 tradedate, uint32 deliverydate, uint quantity, uint32 price, int deliveryamount){
+    function getTrade(uint id) constant returns (address sender, address seller, address buyer,  bytes12 seccode, uint32 tradedate, uint32 deliverydate, uint quantity, uint32 price, int deliveryamount, uint matchedtrade){
         t=trademap[id];
-        seller == t.seller;
-        buyer == t.buyer;
-        seccode == t.seccode;
-        tradedate == t.tradedate;
-        deliverydate == t.deliverydate;
-        quantity == t.quantity;
-        price == t.price;
-        deliveryamount == t.deliveryamount;
+        sender = t.sender;
+        seller = t.seller;
+        buyer = t.buyer;
+        seccode = t.seccode;
+        tradedate = t.tradedate;
+        deliverydate = t.deliverydate;
+        quantity = t.quantity;
+        price = t.price;
+        deliveryamount = t.deliveryamount;
+        matchedtrade = t.matchedtrade;
     }
     
     
-    function getTradeIdByTradedate(uint32 tradedate,uint count) returns (uint tradeID){
+    function getTradeIdByTradedate(uint32 tradedate,uint count) constant returns (uint tradeID){
         tradeID = tradesByDate[tradedate][count];
     }
 }
