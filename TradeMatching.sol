@@ -4,6 +4,7 @@ contract TradeMatching{
     // Trades to be matched
     struct Trade{
         address sender;
+        bytes32 senderid;
         address seller;
         address buyer;
         bytes12 seccode;
@@ -24,9 +25,9 @@ contract TradeMatching{
     mapping(uint32 => uint) tradesByDateCounter;
     
     // The function
-    function addTrade(address seller, address buyer,  bytes12 seccode, uint32 tradedate, uint32 deliverydate, uint quantity, uint32 price, int deliveryamount) returns (uint tradeID){
-        tradeID = numTrades++;
-        trademap[tradeID] = Trade(msg.sender,seller,buyer,seccode,tradedate,deliverydate, quantity,price, deliveryamount,0);
+    function addTrade(bytes32 senderid, address seller, address buyer,  bytes12 seccode, uint32 tradedate, uint32 deliverydate, uint quantity, uint32 price, int deliveryamount){
+        uint tradeID = numTrades++;
+        trademap[tradeID] = Trade(msg.sender,senderid, seller,buyer,seccode,tradedate,deliverydate,quantity,price, deliveryamount,0);
         
         // store tradeID to tradesByDate
         uint count = tradesByDateCounter[tradedate];
@@ -43,7 +44,7 @@ contract TradeMatching{
             matchingTradeID = tradesByDate[tradedate][count];
             Trade t = trademap[matchingTradeID];
             if(t.sender == msg.sender || t.matchedtrade != 0) continue;
-            if(t.seller == seller && t.buyer == buyer && t.seccode == seccode && t.tradedate == tradedate && t.deliverydate == deliverydate && t.quantity == quantity && t.price == price && t.deliveryamount == deliveryamount){
+            if(t.seller == seller && t.buyer == buyer && t.seccode == seccode && t.tradedate == tradedate && t.deliverydate == deliverydate && t.quantity == quantity && t.price == price){
                 trademap[matchingTradeID].matchedtrade = tradeID;
                 trademap[tradeID].matchedtrade = matchingTradeID;
                 break;
@@ -52,9 +53,10 @@ contract TradeMatching{
     }
     
     // getter
-    function getTrade(uint tradeID) constant returns (address sender, address seller, address buyer,  bytes12 seccode, uint32 tradedate, uint32 deliverydate, uint quantity, uint32 price, int deliveryamount, uint matchedtrade){
+    function getTrade(uint tradeID) constant returns (address sender, bytes32 senderid, address seller, address buyer,  bytes12 seccode, uint32 tradedate, uint32 deliverydate, uint quantity, uint32 price, int deliveryamount, uint matchedtrade){
         Trade t = trademap[tradeID];
         sender = t.sender;
+        senderid = t.senderid;
         seller = t.seller;
         buyer = t.buyer;
         seccode = t.seccode;
