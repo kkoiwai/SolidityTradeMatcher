@@ -5,7 +5,8 @@ define("MONGO_COLLECTION", "meteor.trades");
 define("GETH_RPC_URL", "http://localhost:8545");
 define("GETH_GAS_LIMIT", "0xffffff"); // default gas limit is too small
 
-$MY_ACCT = json_decode(call_method("eth_accounts"), true, 512, JSON_BIGINT_AS_STRING)['result'][0];
+$MY_ACCT = json_decode(call_method("eth_coinbase"), true)['result'];
+
 $JSON_ID_COUNTER = 1;
 
 function call_method($method, $params="[]", $id=1){
@@ -45,7 +46,9 @@ function getTrade($tradeID){
 }
 
 function parse_trade($retStr){
-  $retArray = json_decode($retStr, true, 512, JSON_BIGINT_AS_STRING);
+  $max_int_length = strlen((string) PHP_INT_MAX) - 1;
+  $json_without_bigints = preg_replace('/:\s*(-?\d{'.$max_int_length.',})/', ': "$1"', $retStr);
+  $retArray = json_decode($json_without_bigints, true, 512);
   //echo "parse_trade: ".$retStr."\n";
   //var_dump($retArray);
   $result = $retArray["result"];
@@ -69,9 +72,9 @@ function updateMongoByTradeID($tradeID){
   global $mongo_manager,$MY_ACCT;
   $trade = getTrade($tradeID);
   echo "updateMongoByTradeID( ".$tradeID." )\n";
-  var_dump($trade);
-  
-  if (intval($trade["sender"])==0){
+  //var_dump($trade);
+  //var_dump($trade["sender"]);
+  if (!preg_match('/[^0]/',$trade["sender"])){
     echo "no trade found\n";
     return false;
   }
@@ -87,8 +90,11 @@ function updateMongoByTradeID($tradeID){
   $trade["tradeID"] = $tradeID;
   
   $bulk = new MongoDB\Driver\BulkWrite;
+  //echo "strcasecmp". $trade['sender']."  ".substr($MY_ACCT,-40,40);
   if (strcasecmp($trade['sender'],substr($MY_ACCT,-40,40))==0){
     // MY Trade
+    //echo "my trade is updated:";
+    //var_dump ($trade);
     $bulk->update(['_id' => $trade['senderid'],'sender' => $trade['sender']], ['$set' => $trade], ['multi' => false, 'upsert' => true]);
   }else{
     // OTHER's Trade
@@ -132,7 +138,9 @@ function addTrade($senderid, $seller, $buyer, $seccode, $tradedate,  $deliveryda
 }
                              
 function parse_transaction_hash($retStr){
-  $retArray = json_decode($retStr, true, 512, JSON_BIGINT_AS_STRING);
+  //$retArray = json_decode($retStr, true, 512, JSON_BIGINT_AS_STRING);
+  $json_without_bigints = preg_replace('/:\s*(-?\d{'.$max_int_length.',})/', ': "$1"', $retStr);
+  $retArray = json_decode($json_without_bigints, true, 512);
   if( isset($retArray["error"])){
     echo "parse_transaction_hash error\n";
     var_dump($retArray);
@@ -196,7 +204,7 @@ function updateMongoTranHash($id,$tranhash){
 
 
 
-while(false){
+while(true){
   // get queued trades from mongo and send to the network (addTrades) and change the status to pending
   addQueuedTrades();
   
@@ -204,7 +212,7 @@ while(false){
   $i=1;
   while( updateMongoByTradeID($i++));
   
-  sleep(5);
+  sleep(10);
   // 
 }
 ?>
