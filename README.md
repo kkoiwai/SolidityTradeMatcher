@@ -7,8 +7,8 @@ https://github.com/kkoiwai/SolidityTradeMatcher/blob/master/TradeMatchingOnEther
 
 ## How to use まずは試してみる
 
-    docker run -P --name ethereum1 kocko/soliditytradematcher
+    docker run -P -h ethereum1 --name ethereum1 kocko/soliditytradematcher
     # １０分ほど待つ（１号機内で自動的にコントラクトのコンパイル、登録が走るので）
     # wait for approc. 10 mins while ethereum1 node compilies the solidity code
-    docker run -P --name ethereum2 --link ethereum1:ethereum1 kocko/soliditytradematcher 2
-    docker run -P --name ethereum3 --link ethereum1:ethereum1 --link ethereum2:ethereum2 kocko/soliditytradematcher 3
+    docker run -P -h ethereum2 --name ethereum2 --link ethereum1:ethereum1 kocko/soliditytradematcher 2
+    docker run -P -h ethereum3 --name ethereum3 --link ethereum1:ethereum1 --link ethereum2:ethereum2 kocko/soliditytradematcher 3

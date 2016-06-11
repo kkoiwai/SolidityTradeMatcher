@@ -35,7 +35,7 @@ function call_method($method, $params="[]", $id=1){
 
 
 function eth_sendTransaction($data="[]",$id=1){
-  global $MY_ACCT;
+  global $MY_ACCT,$CONTRACT_ADDR;
   return call_method("eth_sendTransaction",'[{"from":"'.$MY_ACCT.'","to":"' .$CONTRACT_ADDR. '","data":"'.$data.'","gas":"'.GETH_GAS_LIMIT.'","value":"0x0"}]',$id); 
 }
 
