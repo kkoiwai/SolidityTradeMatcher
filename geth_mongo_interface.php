@@ -1,42 +1,42 @@
 <?php
-define("COTRACT_ADDR", "0xcafebabedeadbeafcafebabedeadbeafcafebabedeadbeaf");// your contract
+//define("CONTRACT_ADDR", "0xcafebabedeadbeafcafebabedeadbeafcafebabedeadbeaf");// your contract
+define("CONTRACT_FILE", "TradeMatching.sol");
 $mongo_manager = new MongoDB\Driver\Manager("mongodb://localhost:3001");
 define("MONGO_COLLECTION", "meteor.trades");
 define("GETH_RPC_URL", "http://localhost:8545");
 define("GETH_GAS_LIMIT", "0xffffff"); // default gas limit is too small
 
+require "geth_include.php";
+
 $MY_ACCT = json_decode(call_method("eth_coinbase"), true)['result'];
 
 $JSON_ID_COUNTER = 1;
 
-function call_method($method, $params="[]", $id=1){
-    $defaults = array( 
-        CURLOPT_POST => 1, 
-        CURLOPT_HEADER => 0, 
-        CURLOPT_URL => GETH_RPC_URL, 
-        CURLOPT_FRESH_CONNECT => 1, 
-        CURLOPT_RETURNTRANSFER => 1, 
-        CURLOPT_FORBID_REUSE => 1, 
-        CURLOPT_TIMEOUT => 4, 
+if(defined("CONTRACT_ADDR")){
+  $CONTRACT_ADDR = CONTRACT_ADDR;
+}else{
+  $CONTRACT_ADDR = getMongoContractAddress();
+}
+if(!isset($CONTRACT_ADDR) || !$CONTRACT_ADDR) die ("\$CONTRACT_ADDR not set \n");
 
-        CURLOPT_POSTFIELDS => '{"jsonrpc":"2.0","method":"' . $method . '","params":' . $params . ',"id":' . $id . '}'
-
-    ); 
-
-    $ch = curl_init(); 
-    curl_setopt_array($ch, ($defaults)); 
-    if( ! $result = curl_exec($ch)) 
-    { 
-        trigger_error(curl_error($ch)); 
-    } 
-    curl_close($ch); 
-  //echo 'call_method  : '.'{"jsonrpc":"2.0","method":"' . $method . '","params":' . $params . ',"id":' . $id . '}'."\n";
-  //echo $result."\n";
-  return $result;
+while(true){
+  // get queued trades from mongo and send to the network (addTrades) and change the status to pending
+  addQueuedTrades();
+  
+  // traverse all trades in the network and update mongo (until the filter function is implemented)
+  $i=1;
+  while( updateMongoByTradeID($i++));
+  
+  sleep(10);
+  // 
 }
 
+
+
 function eth_call($data="[]",$id=1){
-  return call_method("eth_call",'[{"to": "' .COTRACT_ADDR. '", "data": "'.$data.'"}]',$id);
+  global $CONTRACT_ADDR;
+  print '[eth_call] call_method("eth_call",[{"to": "'.$CONTRACT_ADDR.'", "data": "'.$data.'"}],'.$id.');'."\n";
+  return call_method("eth_call",'[{"to": "' .$CONTRACT_ADDR. '", "data": "'.$data.'"}, "latest"]' ,$id);
 }
 
 function getTrade($tradeID){
@@ -50,7 +50,7 @@ function parse_trade($retStr){
   $json_without_bigints = preg_replace('/:\s*(-?\d{'.$max_int_length.',})/', ': "$1"', $retStr);
   $retArray = json_decode($json_without_bigints, true, 512);
   //echo "parse_trade: ".$retStr."\n";
-  //var_dump($retArray);
+  var_dump($retArray);
   $result = $retArray["result"];
   //$result = $retStr;
   return  array(
@@ -137,25 +137,8 @@ function addTrade($senderid, $seller, $buyer, $seccode, $tradedate,  $deliveryda
   return parse_transaction_hash($retval);
 }
                              
-function parse_transaction_hash($retStr){
-  //$retArray = json_decode($retStr, true, 512, JSON_BIGINT_AS_STRING);
-  $json_without_bigints = preg_replace('/:\s*(-?\d{'.$max_int_length.',})/', ': "$1"', $retStr);
-  $retArray = json_decode($json_without_bigints, true, 512);
-  if( isset($retArray["error"])){
-    echo "parse_transaction_hash error\n";
-    var_dump($retArray);
-    return false;
-  }
-  $result = $retArray["result"];
-  //echo "parse_transaction_hash\n";
-  //var_dump($result);
-  return  substr($result,2,64);
-}
 
-function eth_sendTransaction($data="[]",$id=1){
-  global $MY_ACCT;
-  return call_method("eth_sendTransaction",'[{"from":"'.$MY_ACCT.'","to":"' .COTRACT_ADDR. '","data":"'.$data.'","gas":"'.GETH_GAS_LIMIT.'","value":"0x0"}]',$id); 
-}
+
                              
 function addQueuedTrades(){
   global $mongo_manager;
@@ -203,16 +186,16 @@ function updateMongoTranHash($id,$tranhash){
 }
 
 
-
-while(true){
-  // get queued trades from mongo and send to the network (addTrades) and change the status to pending
-  addQueuedTrades();
-  
-  // traverse all trades in the network and update mongo (until the filter function is implemented)
-  $i=1;
-  while( updateMongoByTradeID($i++));
-  
-  sleep(10);
-  // 
+function getMongoContractAddress(){
+  global $mongo_manager;
+  $filter = [];
+  $query = new MongoDB\Driver\Query($filter);
+  $cursor = $mongo_manager->executeQuery("meteor.contract", $query);
+  foreach ($cursor as $document) {
+   // var_dump($document);
+    var_dump($document->address);
+    return $document->address;
+  }
+  return false;
 }
 ?>
