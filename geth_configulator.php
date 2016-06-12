@@ -53,6 +53,10 @@ function getMyNodeInfoAndAddToMongo(){
 }
 
 function createContractAndAddToMongo(){
+  print "check if contract alread exists:" .strlen(curl_get_content("http://localhost:3000/contractinfo"))."\n";
+  if(strlen(curl_get_content("http://localhost:3000/contractinfo"))==42){
+    return;
+  }
   compileAndAddContract("TradeMatching.sol");
 }
 
@@ -180,7 +184,7 @@ function curl_get_content($url){
         CURLOPT_FRESH_CONNECT => 1, 
         CURLOPT_RETURNTRANSFER => 1, 
         CURLOPT_FORBID_REUSE => 1, 
-        CURLOPT_TIMEOUT => 4, 
+        CURLOPT_TIMEOUT => 15, 
     ); 
 
     $ch = curl_init(); 
