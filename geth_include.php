@@ -56,4 +56,13 @@ function parse_transaction_hash($retStr){
   return $result;
 }
 
+function add_0x($value){
+  var_dump($value);
+  if(strlen($value)< 3 || strncmp($value,'0x',2)==0){
+    return $value;
+  }else{
+    return '0x'.$value;
+  }
+}
+
 ?>

@@ -54,10 +54,10 @@ function parse_trade($retStr){
   $result = $retArray["result"];
   //$result = $retStr;
   return  array(
-    "sender"       => substr(substr($result,2,64),-40,40),
+    "sender"       => add_0x(substr(substr($result,2,64),-40,40)),
     "senderid"     => trim(hex2bin(substr($result,2+64*1,64))),
-    "seller"       => substr(substr($result,2+64*2,64),-40,40),
-    "buyer"        => substr(substr($result,2+64*3,64),-40,40),
+    "seller"       => add_0x(substr(substr($result,2+64*2,64),-40,40)),
+    "buyer"        => add_0x(substr(substr($result,2+64*3,64),-40,40)),
     "seccode"      => trim(hex2bin(substr($result,2+64*4,64))),
     "tradedate"    => hexdec(substr($result,2+64*5,64)),
     "deliverydate" => hexdec(substr($result,2+64*6,64)),
@@ -74,7 +74,8 @@ function updateMongoByTradeID($tradeID){
   echo "updateMongoByTradeID( ".$tradeID." )\n";
   //var_dump($trade);
   //var_dump($trade["sender"]);
-  if (!preg_match('/[^0]/',$trade["sender"])){
+  // TODO: reject 0x000...0
+  if (preg_match('/^(0+|0x0+)$/',$trade["sender"])){
     echo "no trade found\n";
     return false;
   }
