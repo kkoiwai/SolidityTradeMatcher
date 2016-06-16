@@ -50,7 +50,7 @@ function parse_trade($retStr){
   $json_without_bigints = preg_replace('/:\s*(-?\d{'.$max_int_length.',})/', ': "$1"', $retStr);
   $retArray = json_decode($json_without_bigints, true, 512);
   //echo "parse_trade: ".$retStr."\n";
-  var_dump($retArray);
+  //var_dump($retArray);
   $result = $retArray["result"];
   //$result = $retStr;
   return  array(
@@ -74,7 +74,6 @@ function updateMongoByTradeID($tradeID){
   echo "updateMongoByTradeID( ".$tradeID." )\n";
   //var_dump($trade);
   //var_dump($trade["sender"]);
-  // TODO: reject 0x000...0
   if (preg_match('/^(0+|0x0+)$/',$trade["sender"])){
     echo "no trade found\n";
     return false;
@@ -92,7 +91,7 @@ function updateMongoByTradeID($tradeID){
   
   $bulk = new MongoDB\Driver\BulkWrite;
   //echo "strcasecmp". $trade['sender']."  ".substr($MY_ACCT,-40,40);
-  if (strcasecmp($trade['sender'],substr($MY_ACCT,-40,40))==0){
+  if (strcasecmp($trade['sender'],substr($MY_ACCT,-42,42))==0){
     // MY Trade
     //echo "my trade is updated:";
     //var_dump ($trade);
@@ -166,7 +165,7 @@ function addTradeFromDocument($document){
 function updateMongoTranHash($id,$tranhash){
   global $mongo_manager,$MY_ACCT;
   $bulk = new MongoDB\Driver\BulkWrite;
-  $bulk->update(['_id' => $id], ['$set' => ['status' => 'pending', 'transactionhash' => $tranhash, 'sender' => substr($MY_ACCT,-40,40)]], ['multi' => false, 'upsert' => false]);
+  $bulk->update(['_id' => $id], ['$set' => ['status' => 'pending', 'transactionhash' => $tranhash, 'sender' => substr($MY_ACCT,-42,42)]], ['multi' => false, 'upsert' => false]);
   $result = $mongo_manager->executeBulkWrite(MONGO_COLLECTION, $bulk);
   
   $retval = true;
@@ -194,7 +193,7 @@ function getMongoContractAddress(){
   $cursor = $mongo_manager->executeQuery("meteor.contract", $query);
   foreach ($cursor as $document) {
    // var_dump($document);
-    var_dump($document->address);
+   // var_dump($document->address);
     return $document->address;
   }
   return false;
