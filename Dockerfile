@@ -12,11 +12,7 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en  
 ENV LC_ALL en_US.UTF-8
 WORKDIR /home/ethereum
-RUN meteor create TradeMatchingWeb
 COPY TradeMatchingWeb TradeMatchingWeb/
-WORKDIR TradeMatchingWeb
-RUN  meteor add reactive-dict tsega:bootstrap3-datetimepicker iron:router
-WORKDIR ..
 COPY init.sh ./
 COPY geth_mongo_interface.php ./
 COPY mongo_counterparty_initializer.php ./
