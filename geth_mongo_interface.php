@@ -74,7 +74,7 @@ function updateMongoByTradeID($tradeID){
   echo "updateMongoByTradeID( ".$tradeID." )\n";
   //var_dump($trade);
   //var_dump($trade["sender"]);
-  if (preg_match('/^(0+|0x0+)$/',$trade["sender"])){
+  if (empty($trade["sender"])||preg_match('/^(0+|0x0+)$/',$trade["sender"])){
     echo "no trade found\n";
     return false;
   }
